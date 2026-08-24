@@ -1,10 +1,11 @@
 # Companies House MCP Server
 
-Read-only MCP server over the CH Public Data API. stdio transport.
+Read-only MCP server over the CH Public Data API. Intended as a personal/portfolio project, the infrastructure will run
+on Docker locally and be orchestrated by a `docker-compose.yaml`.
 
 ## Stack
 
-Java 25, Spring Boot 4+, Maven 3.9+, Docker Compose, React (static), PostgreSQL
+Java 25, Spring Boot 4+, Maven 3.9+, Docker Compose, React (static), PostgreSQL, JUnit Jupiter.
 
 ## Skills
 
@@ -17,7 +18,20 @@ Claude skills can be found in `./.claude/skills`.
 ## Hosts — two, do not mix
 
 - Public data: https://api.company-information.service.gov.uk
-- Documents:   https://document-api.company-information.service.gov.uk
+- Documents:   https://developer-specs.company-information.service.gov.uk/companies-house-public-data-api/reference
+
+## Reference specs
+
+Swagger 2.0, fetchable with `curl`. The root spec is an index only — every path is a `$ref`.
+
+- Public data: https://developer-specs.company-information.service.gov.uk/api.ch.gov.uk-specifications/swagger-2.0/spec/swagger.json
+- Documents:   https://developer-specs.company-information.service.gov.uk/document.api.ch.gov.uk-specifications/swagger-2.0/spec/swagger.json
+
+Refs are baked with a `http://127.0.0.1:10000` host and do not resolve as written. Swap that prefix for
+`https://developer-specs.company-information.service.gov.uk` to fetch a fragment, e.g.
+`.../api.ch.gov.uk-specifications/swagger-2.0/spec/companyProfile.json`.
+
+Take request and response shapes from these specs, not from memory.
 
 ## Rules
 
