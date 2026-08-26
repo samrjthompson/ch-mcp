@@ -242,5 +242,6 @@ Static imports throughout: `assertEquals`, not `Assertions.assertEquals`; `when`
 - Test methods are package-private and `void`. No `public`.
 - Method names start `should` and carry both the behaviour and the condition:
   `shouldRetrieveCompaniesWithinFiveMileRadiusOfPostcode`, not `testGetCompanies`.
-- Locals are `final`.
+- Locals follow the `final-only-for-values` skill: `final` on `String` and primitive locals, bare on
+  everything else — except `actual` and `expected`, which always take `final` whatever their type.
 - The result of the call under test is named `actual`.

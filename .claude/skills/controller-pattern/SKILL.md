@@ -136,7 +136,7 @@ public class ControllerIT {
                 .andExpect(status().isOk());
 
         // then
-        String responseBody = resultActions.andReturn().getResponse().getContentAsString();
+        final String responseBody = resultActions.andReturn().getResponse().getContentAsString();
         assertEquals("[]", responseBody);
     }
 }

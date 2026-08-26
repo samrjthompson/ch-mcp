@@ -47,6 +47,8 @@ Take request and response shapes from these specs, not from memory.
 - Never use `@SpringBootTest`, `@Testcontainers`, or `WireMock` in a unit test, only itests.
 - In itests, use `@DynamicPropertySource` to set app properties.
 - Do not leave code comments (except in `application.properties` and `pom.xml`) or java docs.
+- Offer pattern suggestions if you think it is appropriate. E.g., "Perhaps the Strategy Pattern would suit this workflow".
+- Use Robert Martin's SRP when architecting code.
 
 ## Skill promotion
 

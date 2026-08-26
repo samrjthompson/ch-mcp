@@ -1,6 +1,6 @@
 ---
 name: package-structure
-description: Where a new class goes — package by feature under the base package, common/ for unowned classes and exceptions, config/ for configuration. Load before creating any new Java file or package in this repo.
+description: Where a new class goes — package by feature under the base package, common/ for unowned classes and exceptions, config/ for configuration, logging/ for the structured-logging package. Load before creating any new Java file or package in this repo.
 ---
 
 # Package structure
@@ -20,7 +20,8 @@ chmcp/
 ├── geocoding/
 ├── common/
 │   └── exceptions/
-└── config/
+├── config/
+└── logging/
 ```
 
 ## Choosing the package
@@ -41,6 +42,11 @@ status code it produces are read side by side.
 ## `config/`
 
 Spring configuration classes, top-level and sibling to the features.
+
+## `logging/`
+
+Top-level and sibling to the features, same reasoning as `config/` — a cross-cutting capability rather
+than something one feature owns. See the `structured-logging` skill.
 
 ## Features talk through services
 
