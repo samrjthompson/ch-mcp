@@ -1,0 +1,24 @@
+{
+  "type": "object",
+  "properties": {
+    "query": {
+      "type": "string",
+      "description": "Free text company search query"
+    },
+    "itemsPerPage": {
+      "type": "integer",
+      "description": "Number of results per page"
+    },
+    "startIndex": {
+      "type": "integer",
+      "description": "Zero-based index of the first result"
+    },
+    "restrictions": {
+      "type": "string",
+      "description": "Companies House search restriction filter"
+    }
+  },
+  "required": [
+    "query"
+  ]
+}

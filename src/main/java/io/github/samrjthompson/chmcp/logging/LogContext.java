@@ -8,6 +8,7 @@ public final class LogContext {
 
     private static final String REQUEST_ID_KEY = "requestId";
     private static final String QUERY_KEY = "query";
+    private static final String TOOL_NAME_KEY = "toolName";
     private static final String UNINITIALISED = "uninitialised";
     private static final LogContext INSTANCE = new LogContext();
 
@@ -24,6 +25,11 @@ public final class LogContext {
 
     public LogContext query(final String query) {
         MDC.put(QUERY_KEY, query);
+        return this;
+    }
+
+    public LogContext toolName(final String toolName) {
+        MDC.put(TOOL_NAME_KEY, toolName);
         return this;
     }
 
