@@ -1,4 +1,4 @@
-package io.github.samrjthompson.chmcp.mcp;
+package io.github.samrjthompson.chmcp.common;
 
 import io.github.samrjthompson.chmcp.common.exception.BadGatewayException;
 import io.github.samrjthompson.chmcp.common.exception.BadRequestException;
@@ -13,7 +13,7 @@ import java.util.stream.Collectors;
 import org.springframework.stereotype.Component;
 
 @Component
-public class McpToolExceptionMapper {
+public class ToolExceptionMapper {
 
     private static final String BAD_REQUEST_MESSAGE = "The request to Companies House was invalid";
     private static final String UNAUTHORIZED_MESSAGE = "The Companies House API key was rejected";
@@ -39,7 +39,9 @@ public class McpToolExceptionMapper {
     }
 
     private static String toMessage(ConstraintViolationException exception) {
-        return exception.getConstraintViolations().stream().map(ConstraintViolation::getMessage)
+        return exception.getConstraintViolations()
+                .stream()
+                .map(ConstraintViolation::getMessage)
                 .collect(Collectors.joining(", "));
     }
 }

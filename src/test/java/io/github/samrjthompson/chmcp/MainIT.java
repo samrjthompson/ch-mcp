@@ -28,7 +28,9 @@ class MainIT {
 
     @Test
     void shouldReturn200FromGetHealthEndpoint() throws Exception {
-        this.mockMvc.perform(MockMvcRequestBuilders.get("/healthcheck")).andDo(print()).andExpect(status().isOk())
+        this.mockMvc.perform(MockMvcRequestBuilders.get("/healthcheck"))
+                .andDo(print())
+                .andExpect(status().isOk())
                 .andExpect(content().string("{\"groups\":[\"liveness\",\"readiness\"],\"status\":\"UP\"}"));
     }
 }

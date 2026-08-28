@@ -1,4 +1,4 @@
-package io.github.samrjthompson.chmcp.company.client;
+package io.github.samrjthompson.chmcp.client;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 
@@ -16,7 +16,8 @@ public class UriBuilder {
             return URI.create(baseUrl + path);
         }
 
-        final String queryString = queryParameters.entrySet().stream()
+        final String queryString = queryParameters.entrySet()
+                .stream()
                 .map(parameter -> encode(parameter.getKey()) + "=" + encode(parameter.getValue()))
                 .collect(Collectors.joining("&"));
 

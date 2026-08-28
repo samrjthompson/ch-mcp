@@ -1,6 +1,6 @@
 package io.github.samrjthompson.chmcp.company.service;
 
-import io.github.samrjthompson.chmcp.company.client.CompaniesHouseClient;
+import io.github.samrjthompson.chmcp.client.CompaniesHouseClient;
 import io.github.samrjthompson.chmcp.company.model.CompanySearchRequest;
 import io.github.samrjthompson.chmcp.company.model.CompanySearchResponse;
 import io.github.samrjthompson.chmcp.logging.LogContext;

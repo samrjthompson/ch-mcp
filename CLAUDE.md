@@ -39,7 +39,7 @@ Take request and response shapes from these specs, not from memory.
   in a fixture.
 - Rate limit is 600 req / 5 min per key, shared across all endpoints. Every outbound call goes through a client.
 - Company numbers are 8 chars, uppercase, zero-padded (`01234567`, `SC012345`).
-- One tool per class in `tools/`, registered in `ToolConfig`.
+- One tool per class in its owning domain's `tool/` package (e.g. `company/tool/`), registered in `ToolConfig`.
 - Tests run against fixtures in `src/test/resources/`. Nothing hits live.
 - Never return raw upstream JSON. Map to a response record.
 - Use Java net HTTP rather than Spring Rest.

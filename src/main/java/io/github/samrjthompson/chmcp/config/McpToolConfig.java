@@ -1,6 +1,6 @@
-package io.github.samrjthompson.chmcp.mcp.config;
+package io.github.samrjthompson.chmcp.config;
 
-import io.github.samrjthompson.chmcp.mcp.tools.SearchTool;
+import io.github.samrjthompson.chmcp.company.tool.SearchTool;
 import org.springframework.ai.tool.ToolCallbackProvider;
 import org.springframework.ai.tool.method.MethodToolCallbackProvider;
 import org.springframework.context.annotation.Bean;

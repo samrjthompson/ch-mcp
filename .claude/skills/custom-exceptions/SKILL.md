@@ -179,6 +179,28 @@ our internals on the wire. The detail lives in the log, where it belongs.
 coming. Spring resolves to the closest matching handler, so the fallback only fires when nothing more
 specific matches. Method order in the file does not affect resolution.
 
+## Catching broadly, throwing narrowly
+
+"Never use generic error types" governs what you *throw*, not what you *catch* — it's about the type you
+construct, not the type in a catch clause. `ControllerExceptionHandler` above already relies on this:
+`@ExceptionHandler({InternalServerErrorException.class, Exception.class})` catches `Exception.class`
+directly, on purpose, as the deliberate fallback.
+
+`ToolExceptionAspect` (`common/exception/`, the MCP/Spring-AI-tool equivalent of
+`ControllerExceptionHandler` — one `@Around` advice wrapping every `@Tool` method) does the same thing:
+`catch (RuntimeException exception)`, then translates whatever came out into a safe message via
+`ToolExceptionMapper` before rethrowing `ToolException`. An earlier version of this aspect named all
+seven custom types plus `ConstraintViolationException` in a multi-catch instead — that added nothing,
+since the aspect never branches on the caught type itself (only `ToolExceptionMapper`'s `switch` does),
+and it meant any *other* `RuntimeException` — a real bug, not a classified failure — skipped translation
+entirely and leaked its raw message instead of the mapper's safe fallback.
+
+Catch broadly only at a genuine boundary that funnels many possible causes into one safe outward
+signal — a `@RestControllerAdvice`, an aspect wrapping every invocation of some kind, anything playing
+that same role. Not mid-flow, and never as a way to skip deciding what a failure actually is before it
+reaches that boundary. The exception types themselves stay specific either way — this only changes what
+a *handler* is allowed to catch, never what anything is allowed to throw.
+
 ## Tests
 
 **The three exception classes get no test.** Two constructors delegating to `super` is exactly the

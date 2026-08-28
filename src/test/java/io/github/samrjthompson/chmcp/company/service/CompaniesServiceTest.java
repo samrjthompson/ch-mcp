@@ -7,7 +7,7 @@ import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import io.github.samrjthompson.chmcp.company.client.CompaniesHouseClient;
+import io.github.samrjthompson.chmcp.client.CompaniesHouseClient;
 import io.github.samrjthompson.chmcp.company.model.CompanySearchRequest;
 import io.github.samrjthompson.chmcp.company.model.CompanySearchResponse;
 import java.util.Map;
@@ -55,12 +55,19 @@ class CompaniesServiceTest {
     private static Stream<Arguments> arguments() {
         return Stream.of(
                 Arguments.of(
-                        CompanySearchRequest.builder().query(QUERY).itemsPerPage(ITEMS_PER_PAGE).startIndex(START_INDEX)
-                                .restrictions(RESTRICTIONS).build(),
+                        CompanySearchRequest.builder()
+                                .query(QUERY)
+                                .itemsPerPage(ITEMS_PER_PAGE)
+                                .startIndex(START_INDEX)
+                                .restrictions(RESTRICTIONS)
+                                .build(),
                         Map.of("q", QUERY, "items_per_page", Integer.toString(ITEMS_PER_PAGE), "start_index",
                                 Integer.toString(START_INDEX), "restrictions", RESTRICTIONS)),
                 Arguments.of(
-                        CompanySearchRequest.builder().query(QUERY).startIndex(START_INDEX).restrictions(RESTRICTIONS)
+                        CompanySearchRequest.builder()
+                                .query(QUERY)
+                                .startIndex(START_INDEX)
+                                .restrictions(RESTRICTIONS)
                                 .build(),
                         Map.of("q", QUERY, "start_index", Integer.toString(START_INDEX), "restrictions", RESTRICTIONS)),
                 Arguments.of(CompanySearchRequest.builder().query(QUERY).restrictions(RESTRICTIONS).build(),

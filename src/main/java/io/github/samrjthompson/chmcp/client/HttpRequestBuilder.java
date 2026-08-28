@@ -1,4 +1,4 @@
-package io.github.samrjthompson.chmcp.company.client;
+package io.github.samrjthompson.chmcp.client;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 
@@ -16,9 +16,13 @@ public class HttpRequestBuilder {
     private static final String APPLICATION_JSON = "application/json";
 
     public HttpRequest buildGet(URI uri, Duration timeout, final String apiKey) {
-        return HttpRequest.newBuilder().uri(uri).timeout(timeout)
-                .header(AUTHORIZATION_HEADER, basicAuthorisationHeader(apiKey)).header(ACCEPT_HEADER, APPLICATION_JSON)
-                .GET().build();
+        return HttpRequest.newBuilder()
+                .uri(uri)
+                .timeout(timeout)
+                .header(AUTHORIZATION_HEADER, basicAuthorisationHeader(apiKey))
+                .header(ACCEPT_HEADER, APPLICATION_JSON)
+                .GET()
+                .build();
     }
 
     private String basicAuthorisationHeader(final String apiKey) {

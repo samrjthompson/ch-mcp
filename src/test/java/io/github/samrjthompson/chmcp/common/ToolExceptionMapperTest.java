@@ -1,4 +1,4 @@
-package io.github.samrjthompson.chmcp.mcp;
+package io.github.samrjthompson.chmcp.common;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -25,12 +25,12 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
-class McpToolExceptionMapperTest {
+class ToolExceptionMapperTest {
 
     private static final String MESSAGE = "message";
 
     @InjectMocks
-    private McpToolExceptionMapper mcpToolExceptionMapper;
+    private ToolExceptionMapper toolExceptionMapper;
 
     @Mock
     private ConstraintViolation<?> firstConstraintViolation;
@@ -41,7 +41,7 @@ class McpToolExceptionMapperTest {
     @MethodSource("exceptionsAndExpectedMessages")
     void shouldMapExceptionToFixedMessage(RuntimeException exception, final String expectedMessage) {
         // given / when
-        final String actual = mcpToolExceptionMapper.toErrorMessage(exception);
+        final String actual = toolExceptionMapper.toErrorMessage(exception);
 
         // then
         assertEquals(expectedMessage, actual);
@@ -70,7 +70,7 @@ class McpToolExceptionMapperTest {
                 new ConstraintViolationException(Set.of(firstConstraintViolation, secondConstraintViolation));
 
         // when
-        final String actual = mcpToolExceptionMapper.toErrorMessage(exception);
+        final String actual = toolExceptionMapper.toErrorMessage(exception);
 
         // then
         assertTrue(actual.contains("query must not be blank"));

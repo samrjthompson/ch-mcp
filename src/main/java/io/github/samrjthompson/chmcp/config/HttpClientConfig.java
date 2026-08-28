@@ -11,7 +11,9 @@ public class HttpClientConfig {
 
     @Bean
     public HttpClient httpClient(CompaniesHouseProperties properties) {
-        return HttpClient.newBuilder().connectTimeout(properties.connectTimeout())
-                .followRedirects(HttpClient.Redirect.NORMAL).build();
+        return HttpClient.newBuilder()
+                .connectTimeout(properties.connectTimeout())
+                .followRedirects(HttpClient.Redirect.NORMAL)
+                .build();
     }
 }

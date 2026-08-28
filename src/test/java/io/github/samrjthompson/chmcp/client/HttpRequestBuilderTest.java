@@ -1,4 +1,4 @@
-package io.github.samrjthompson.chmcp.company.client;
+package io.github.samrjthompson.chmcp.client;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -23,8 +23,13 @@ class HttpRequestBuilderTest {
     @Test
     void shouldBuildHttpRequest() {
         // given
-        final HttpRequest expected = HttpRequest.newBuilder().uri(REQUEST_URI).timeout(REQUEST_TIMEOUT)
-                .header(AUTHORIZATION_HEADER, encodeApiKey()).header(ACCEPT_HEADER, APPLICATION_JSON).GET().build();
+        final HttpRequest expected = HttpRequest.newBuilder()
+                .uri(REQUEST_URI)
+                .timeout(REQUEST_TIMEOUT)
+                .header(AUTHORIZATION_HEADER, encodeApiKey())
+                .header(ACCEPT_HEADER, APPLICATION_JSON)
+                .GET()
+                .build();
 
         // when
         final HttpRequest actual = httpRequestBuilder.buildGet(REQUEST_URI, REQUEST_TIMEOUT, API_KEY);

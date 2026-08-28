@@ -1,4 +1,4 @@
-package io.github.samrjthompson.chmcp.company.client;
+package io.github.samrjthompson.chmcp.client;
 
 import io.github.samrjthompson.chmcp.common.exception.BadGatewayException;
 import io.github.samrjthompson.chmcp.common.exception.BadRequestException;

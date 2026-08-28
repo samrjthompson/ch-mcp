@@ -1,4 +1,4 @@
-package io.github.samrjthompson.chmcp.company.client;
+package io.github.samrjthompson.chmcp.client;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
