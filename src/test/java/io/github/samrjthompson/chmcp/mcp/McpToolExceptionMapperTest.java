@@ -48,14 +48,12 @@ class McpToolExceptionMapperTest {
     }
 
     static Stream<Arguments> exceptionsAndExpectedMessages() {
-        return Stream.of(
-                Arguments.of(new BadRequestException(MESSAGE), "The request to Companies House was invalid"),
+        return Stream.of(Arguments.of(new BadRequestException(MESSAGE), "The request to Companies House was invalid"),
                 Arguments.of(new UnauthorizedException(MESSAGE), "The Companies House API key was rejected"),
                 Arguments.of(new ForbiddenException(MESSAGE),
                         "Access to the requested Companies House resource is forbidden"),
                 Arguments.of(new NotFoundException(MESSAGE), "The requested company could not be found"),
-                Arguments.of(new TooManyRequestsException(MESSAGE),
-                        "The Companies House rate limit has been exceeded"),
+                Arguments.of(new TooManyRequestsException(MESSAGE), "The Companies House rate limit has been exceeded"),
                 Arguments.of(new InternalServerErrorException(MESSAGE),
                         "An internal error occurred while executing the tool"),
                 Arguments.of(new BadGatewayException(MESSAGE), "Companies House could not be reached"),

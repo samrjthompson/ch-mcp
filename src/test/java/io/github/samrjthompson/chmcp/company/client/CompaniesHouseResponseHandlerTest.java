@@ -45,7 +45,7 @@ class CompaniesHouseResponseHandlerTest {
     @ParameterizedTest
     @MethodSource("statusCodesAndExceptions")
     void shouldThrowMappedExceptionWhenStatusCodeIsNotSuccessful(final int statusCode,
-                                                                 final Class<RuntimeException> expected) {
+            final Class<RuntimeException> expected) {
         // given
         when(httpResponse.statusCode()).thenReturn(statusCode);
         when(responseBodySanitiser.sanitise(any())).thenReturn(BODY);
@@ -71,8 +71,7 @@ class CompaniesHouseResponseHandlerTest {
     }
 
     static Stream<Arguments> statusCodesAndExceptions() {
-        return Stream.of(
-                Arguments.of(HttpStatus.BAD_REQUEST.value(), BadRequestException.class),
+        return Stream.of(Arguments.of(HttpStatus.BAD_REQUEST.value(), BadRequestException.class),
                 Arguments.of(HttpStatus.UNAUTHORIZED.value(), UnauthorizedException.class),
                 Arguments.of(HttpStatus.FORBIDDEN.value(), ForbiddenException.class),
                 Arguments.of(HttpStatus.NOT_FOUND.value(), NotFoundException.class),

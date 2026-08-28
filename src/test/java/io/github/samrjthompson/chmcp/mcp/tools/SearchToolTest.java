@@ -41,12 +41,8 @@ class SearchToolTest {
     @Test
     void shouldSearchCompaniesWhenArgumentsAreProvided() {
         // given
-        CompanySearchRequest expectedRequest = CompanySearchRequest.builder()
-                .query(QUERY)
-                .itemsPerPage(ITEMS_PER_PAGE)
-                .startIndex(START_INDEX)
-                .restrictions(RESTRICTIONS)
-                .build();
+        CompanySearchRequest expectedRequest = CompanySearchRequest.builder().query(QUERY).itemsPerPage(ITEMS_PER_PAGE)
+                .startIndex(START_INDEX).restrictions(RESTRICTIONS).build();
         when(companiesService.searchCompanies(any())).thenReturn(companySearchResponse);
 
         // when

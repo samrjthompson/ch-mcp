@@ -39,8 +39,7 @@ public class McpToolExceptionMapper {
     }
 
     private static String toMessage(ConstraintViolationException exception) {
-        return exception.getConstraintViolations().stream()
-                .map(ConstraintViolation::getMessage)
+        return exception.getConstraintViolations().stream().map(ConstraintViolation::getMessage)
                 .collect(Collectors.joining(", "));
     }
 }

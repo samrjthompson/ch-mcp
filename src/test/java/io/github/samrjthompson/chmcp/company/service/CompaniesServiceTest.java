@@ -55,41 +55,16 @@ class CompaniesServiceTest {
     private static Stream<Arguments> arguments() {
         return Stream.of(
                 Arguments.of(
-                        CompanySearchRequest.builder()
-                                .query(QUERY)
-                                .itemsPerPage(ITEMS_PER_PAGE)
-                                .startIndex(START_INDEX)
-                                .restrictions(RESTRICTIONS)
-                                .build(),
-                        Map.of("q", QUERY,
-                                "items_per_page", Integer.toString(ITEMS_PER_PAGE),
-                                "start_index", Integer.toString(START_INDEX),
-                                "restrictions", RESTRICTIONS)
-                ),
+                        CompanySearchRequest.builder().query(QUERY).itemsPerPage(ITEMS_PER_PAGE).startIndex(START_INDEX)
+                                .restrictions(RESTRICTIONS).build(),
+                        Map.of("q", QUERY, "items_per_page", Integer.toString(ITEMS_PER_PAGE), "start_index",
+                                Integer.toString(START_INDEX), "restrictions", RESTRICTIONS)),
                 Arguments.of(
-                        CompanySearchRequest.builder()
-                                .query(QUERY)
-                                .startIndex(START_INDEX)
-                                .restrictions(RESTRICTIONS)
+                        CompanySearchRequest.builder().query(QUERY).startIndex(START_INDEX).restrictions(RESTRICTIONS)
                                 .build(),
-                        Map.of("q", QUERY,
-                                "start_index", Integer.toString(START_INDEX),
-                                "restrictions", RESTRICTIONS)
-                ),
-                Arguments.of(
-                        CompanySearchRequest.builder()
-                                .query(QUERY)
-                                .restrictions(RESTRICTIONS)
-                                .build(),
-                        Map.of("q", QUERY,
-                                "restrictions", RESTRICTIONS)
-                ),
-                Arguments.of(
-                        CompanySearchRequest.builder()
-                                .query(QUERY)
-                                .build(),
-                        Map.of("q", QUERY)
-                )
-        );
+                        Map.of("q", QUERY, "start_index", Integer.toString(START_INDEX), "restrictions", RESTRICTIONS)),
+                Arguments.of(CompanySearchRequest.builder().query(QUERY).restrictions(RESTRICTIONS).build(),
+                        Map.of("q", QUERY, "restrictions", RESTRICTIONS)),
+                Arguments.of(CompanySearchRequest.builder().query(QUERY).build(), Map.of("q", QUERY)));
     }
 }

@@ -77,12 +77,12 @@ class CompaniesHouseClientTest {
         when(httpRequestBuilder.buildGet(any(), any(), anyString())).thenReturn(httpRequest);
         when(httpClient.send(any(), ArgumentMatchers.<HttpResponse.BodyHandler<byte[]>>any())).thenReturn(response);
         when(response.body()).thenReturn(RESPONSE_BODY);
-        when(objectMapper.readValue(any(byte[].class), eq(CompanySearchResponse.class))).thenReturn(
-                companySearchResponse);
+        when(objectMapper.readValue(any(byte[].class), eq(CompanySearchResponse.class)))
+                .thenReturn(companySearchResponse);
 
         // when
-        final CompanySearchResponse actual = companiesHouseClient.get(GET_PATH, QUERY_PARAMS,
-                CompanySearchResponse.class);
+        final CompanySearchResponse actual =
+                companiesHouseClient.get(GET_PATH, QUERY_PARAMS, CompanySearchResponse.class);
 
         // then
         assertEquals(companySearchResponse, actual);
@@ -102,8 +102,8 @@ class CompaniesHouseClientTest {
         when(properties.requestTimeout()).thenReturn(REQUEST_TIMEOUT);
         when(uriBuilder.build(anyString(), anyString(), anyMap())).thenReturn(uri);
         when(httpRequestBuilder.buildGet(any(), any(), anyString())).thenReturn(httpRequest);
-        when(httpClient.send(any(), ArgumentMatchers.<HttpResponse.BodyHandler<byte[]>>any())).thenThrow(
-                IOException.class);
+        when(httpClient.send(any(), ArgumentMatchers.<HttpResponse.BodyHandler<byte[]>>any()))
+                .thenThrow(IOException.class);
 
         // when
         Executable ex = () -> companiesHouseClient.get(GET_PATH, QUERY_PARAMS, CompanySearchResponse.class);
@@ -126,8 +126,8 @@ class CompaniesHouseClientTest {
         when(properties.requestTimeout()).thenReturn(REQUEST_TIMEOUT);
         when(uriBuilder.build(anyString(), anyString(), anyMap())).thenReturn(uri);
         when(httpRequestBuilder.buildGet(any(), any(), anyString())).thenReturn(httpRequest);
-        when(httpClient.send(any(), ArgumentMatchers.<HttpResponse.BodyHandler<byte[]>>any())).thenThrow(
-                InterruptedException.class);
+        when(httpClient.send(any(), ArgumentMatchers.<HttpResponse.BodyHandler<byte[]>>any()))
+                .thenThrow(InterruptedException.class);
 
         // when
         Executable ex = () -> companiesHouseClient.get(GET_PATH, QUERY_PARAMS, CompanySearchResponse.class);
@@ -152,8 +152,8 @@ class CompaniesHouseClientTest {
         when(httpRequestBuilder.buildGet(any(), any(), anyString())).thenReturn(httpRequest);
         when(httpClient.send(any(), ArgumentMatchers.<HttpResponse.BodyHandler<byte[]>>any())).thenReturn(response);
         when(response.body()).thenReturn(RESPONSE_BODY);
-        when(objectMapper.readValue(any(byte[].class), eq(CompanySearchResponse.class))).thenThrow(
-                JacksonException.class);
+        when(objectMapper.readValue(any(byte[].class), eq(CompanySearchResponse.class)))
+                .thenThrow(JacksonException.class);
 
         // when
         Executable ex = () -> companiesHouseClient.get(GET_PATH, QUERY_PARAMS, CompanySearchResponse.class);

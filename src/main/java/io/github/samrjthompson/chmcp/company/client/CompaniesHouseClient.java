@@ -28,8 +28,8 @@ public class CompaniesHouseClient {
     private final UriBuilder uriBuilder;
 
     public CompaniesHouseClient(HttpClient httpClient, ObjectMapper objectMapper, CompaniesHouseProperties properties,
-                                CompaniesHouseResponseHandler companiesHouseResponseHandler,
-                                HttpRequestBuilder httpRequestBuilder, UriBuilder uriBuilder) {
+            CompaniesHouseResponseHandler companiesHouseResponseHandler, HttpRequestBuilder httpRequestBuilder,
+            UriBuilder uriBuilder) {
         this.httpClient = httpClient;
         this.objectMapper = objectMapper;
         this.properties = properties;
@@ -42,8 +42,7 @@ public class CompaniesHouseClient {
         LOGGER.info("Sending GET request to Companies House path [{}]", path);
 
         URI uri = uriBuilder.build(properties.baseUrl(), path, queryParameters);
-        HttpRequest request = httpRequestBuilder.buildGet(uri, properties.requestTimeout(),
-                properties.apiKey());
+        HttpRequest request = httpRequestBuilder.buildGet(uri, properties.requestTimeout(), properties.apiKey());
 
         HttpResponse<byte[]> response = send(request, path);
 

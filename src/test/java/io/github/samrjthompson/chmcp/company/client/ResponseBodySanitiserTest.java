@@ -15,8 +15,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 class ResponseBodySanitiserTest {
 
     private static final int MAX_LOGGED_BODY = 512;
-    private static final String WHITESPACE_BODY =
-            "{\n  \"errors\": [\n    \"company-profile-not-found\"\n  ]\n}";
+    private static final String WHITESPACE_BODY = "{\n  \"errors\": [\n    \"company-profile-not-found\"\n  ]\n}";
 
     @InjectMocks
     private ResponseBodySanitiser responseBodySanitiser;
@@ -32,9 +31,7 @@ class ResponseBodySanitiserTest {
     }
 
     static Stream<Arguments> bodiesAndSanitisedBodies() {
-        return Stream.of(
-                Arguments.of(null, ""),
-                Arguments.of(new byte[0], ""),
+        return Stream.of(Arguments.of(null, ""), Arguments.of(new byte[0], ""),
                 Arguments.of(WHITESPACE_BODY.getBytes(StandardCharsets.UTF_8),
                         "{ \"errors\": [ \"company-profile-not-found\" ] }"),
                 Arguments.of("x".repeat(MAX_LOGGED_BODY + 1).getBytes(StandardCharsets.UTF_8),

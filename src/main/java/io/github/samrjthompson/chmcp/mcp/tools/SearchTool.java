@@ -36,20 +36,16 @@ public class SearchTool {
     }
 
     @Tool(name = NAME, description = DESCRIPTION)
-    public CompanySearchResponse search(
-            @ToolParam(description = "Free text company search query") final String query,
+    public CompanySearchResponse search(@ToolParam(description = "Free text company search query") final String query,
             @ToolParam(description = "Number of results per page", required = false) final Integer itemsPerPage,
             @ToolParam(description = "Zero-based index of the first result", required = false) final Integer startIndex,
-            @ToolParam(description = "Companies House search restriction filter", required = false) final String restrictions) {
+            @ToolParam(description = "Companies House search restriction filter",
+                    required = false) final String restrictions) {
         LogContext.get().toolName(NAME);
         LOGGER.info("Dispatching tool call");
 
-        CompanySearchRequest request = CompanySearchRequest.builder()
-                .query(query)
-                .itemsPerPage(itemsPerPage)
-                .startIndex(startIndex)
-                .restrictions(restrictions)
-                .build();
+        CompanySearchRequest request = CompanySearchRequest.builder().query(query).itemsPerPage(itemsPerPage)
+                .startIndex(startIndex).restrictions(restrictions).build();
 
         try {
             return companiesService.searchCompanies(request);

@@ -14,8 +14,7 @@ public class ResponseBodySanitiser {
         }
 
         final String decoded = new String(bytes, 0, Math.min(bytes.length, MAX_LOGGED_BODY), StandardCharsets.UTF_8)
-                .replaceAll("\\s+", " ")
-                .trim();
+                .replaceAll("\\s+", " ").trim();
 
         return bytes.length > MAX_LOGGED_BODY ? decoded + "..." : decoded;
     }

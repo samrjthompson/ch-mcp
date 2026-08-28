@@ -5,7 +5,5 @@ import lombok.Builder;
 
 @Builder
 public record CompanySearchRequest(@NotBlank(message = "Company search query must not be blank") String query,
-                                   Integer itemsPerPage,
-                                   Integer startIndex,
-                                   String restrictions) {
+        Integer itemsPerPage, Integer startIndex, String restrictions) {
 }

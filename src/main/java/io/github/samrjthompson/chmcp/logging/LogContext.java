@@ -12,8 +12,7 @@ public final class LogContext {
     private static final String UNINITIALISED = "uninitialised";
     private static final LogContext INSTANCE = new LogContext();
 
-    private LogContext() {
-    }
+    private LogContext() {}
 
     public static void initialise(final String requestId) {
         MDC.put(REQUEST_ID_KEY, requestId);

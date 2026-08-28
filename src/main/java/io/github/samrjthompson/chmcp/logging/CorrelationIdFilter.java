@@ -18,9 +18,8 @@ public class CorrelationIdFilter extends OncePerRequestFilter {
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
             throws ServletException, IOException {
         final String headerValue = request.getHeader(REQUEST_ID_HEADER);
-        final String requestId = headerValue == null || headerValue.isBlank()
-                ? UUID.randomUUID().toString()
-                : headerValue;
+        final String requestId =
+                headerValue == null || headerValue.isBlank() ? UUID.randomUUID().toString() : headerValue;
 
         try {
             LogContext.initialise(requestId);

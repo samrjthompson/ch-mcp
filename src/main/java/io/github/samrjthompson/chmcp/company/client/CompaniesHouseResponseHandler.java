@@ -27,7 +27,9 @@ public class CompaniesHouseResponseHandler {
 
     public void checkStatus(HttpResponse<byte[]> response, final String path) {
         final int statusCode = response.statusCode();
-        if (is2xx(statusCode)) return;
+        if (is2xx(statusCode)) {
+            return;
+        }
 
         final String body = responseBodySanitiser.sanitise(response.body());
         Optional.ofNullable(HttpStatus.resolve(statusCode)).ifPresentOrElse(status -> {
@@ -82,8 +84,8 @@ public class CompaniesHouseResponseHandler {
     }
 
     private static void unexpected(final int statusCode, final String path) {
-        final String msg = "Companies House API returned unexpected status code [%d] for path [%s]".formatted(
-                statusCode, path);
+        final String msg =
+                "Companies House API returned unexpected status code [%d] for path [%s]".formatted(statusCode, path);
         LOGGER.error(msg);
         throw new InternalServerErrorException(msg);
     }
