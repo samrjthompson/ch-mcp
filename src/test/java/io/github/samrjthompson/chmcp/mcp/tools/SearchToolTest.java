@@ -3,93 +3,73 @@ package io.github.samrjthompson.chmcp.mcp.tools;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
-import io.github.samrjthompson.chmcp.common.exception.InternalServerErrorException;
+import io.github.samrjthompson.chmcp.common.exception.NotFoundException;
 import io.github.samrjthompson.chmcp.company.model.CompanySearchRequest;
 import io.github.samrjthompson.chmcp.company.model.CompanySearchResponse;
 import io.github.samrjthompson.chmcp.company.service.CompaniesService;
-import io.github.samrjthompson.chmcp.mcp.SchemaLoader;
+import io.github.samrjthompson.chmcp.mcp.McpToolExceptionMapper;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.junit.jupiter.api.function.Executable;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import tools.jackson.core.JacksonException;
-import tools.jackson.databind.JsonNode;
-import tools.jackson.databind.ObjectMapper;
 
 @ExtendWith(MockitoExtension.class)
 class SearchToolTest {
 
-    private static final String SCHEMA_PATH = "mcp/tool/search/search_tool_schema.json";
-    private static final String SCHEMA = "schema";
+    private static final String QUERY = "tesco";
+    private static final Integer ITEMS_PER_PAGE = 20;
+    private static final Integer START_INDEX = 0;
+    private static final String RESTRICTIONS = "active";
+    private static final String MESSAGE = "message";
+    private static final String MAPPED_MESSAGE = "mapped message";
 
     @Mock
     private CompaniesService companiesService;
     @Mock
-    private ObjectMapper objectMapper;
-    @Mock
-    private SchemaLoader schemaLoader;
+    private McpToolExceptionMapper mcpToolExceptionMapper;
 
     @InjectMocks
     private SearchTool searchTool;
 
     @Mock
-    private JsonNode jsonNode;
-    @Mock
     private CompanySearchResponse companySearchResponse;
-    @Mock
-    private CompanySearchRequest companySearchRequest;
 
     @Test
-    void shouldGetInputSchema() {
+    void shouldSearchCompaniesWhenArgumentsAreProvided() {
         // given
-        when(schemaLoader.loadFromResources(any(), anyString())).thenReturn(SCHEMA);
-        when(objectMapper.readTree(anyString())).thenReturn(jsonNode);
-
-        // when
-        final JsonNode actual = searchTool.inputSchema();
-
-        // then
-        assertEquals(jsonNode, actual);
-        verify(schemaLoader).loadFromResources(SearchTool.class.getClassLoader(), SCHEMA_PATH);
-        verify(objectMapper).readTree(SCHEMA);
-    }
-
-    @Test
-    void shouldExecute() {
-        // given
-        when(objectMapper.treeToValue(any(), eq(CompanySearchRequest.class))).thenReturn(companySearchRequest);
+        CompanySearchRequest expectedRequest = CompanySearchRequest.builder()
+                .query(QUERY)
+                .itemsPerPage(ITEMS_PER_PAGE)
+                .startIndex(START_INDEX)
+                .restrictions(RESTRICTIONS)
+                .build();
         when(companiesService.searchCompanies(any())).thenReturn(companySearchResponse);
 
         // when
-        final Object actual = searchTool.execute(jsonNode);
+        final CompanySearchResponse actual = searchTool.search(QUERY, ITEMS_PER_PAGE, START_INDEX, RESTRICTIONS);
 
         // then
         assertEquals(companySearchResponse, actual);
-
-        verify(objectMapper).treeToValue(jsonNode, CompanySearchRequest.class);
-        verify(companiesService).searchCompanies(companySearchRequest);
+        verify(companiesService).searchCompanies(expectedRequest);
     }
 
     @Test
-    void shouldThrowInternalServerErrorExceptionWhenJacksonExceptionCaughtDuringObjectMapping() {
+    void shouldThrowRuntimeExceptionWithMappedMessageWhenCompaniesServiceThrowsMappedException() {
         // given
-        when(objectMapper.treeToValue(any(), eq(CompanySearchRequest.class))).thenThrow(JacksonException.class);
+        NotFoundException notFoundException = new NotFoundException(MESSAGE);
+        when(companiesService.searchCompanies(any())).thenThrow(notFoundException);
+        when(mcpToolExceptionMapper.toErrorMessage(any())).thenReturn(MAPPED_MESSAGE);
 
         // when
-        Executable ex = () -> searchTool.execute(jsonNode);
+        final RuntimeException actual = assertThrows(RuntimeException.class,
+                () -> searchTool.search(QUERY, ITEMS_PER_PAGE, START_INDEX, RESTRICTIONS));
 
         // then
-        assertThrows(InternalServerErrorException.class, ex);
-
-        verify(objectMapper).treeToValue(jsonNode, CompanySearchRequest.class);
-        verifyNoInteractions(companiesService);
+        assertEquals(MAPPED_MESSAGE, actual.getMessage());
+        verify(mcpToolExceptionMapper).toErrorMessage(notFoundException);
     }
 }

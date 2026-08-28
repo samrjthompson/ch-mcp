@@ -1,10 +1,12 @@
 package io.github.samrjthompson.chmcp.mcp;
 
+import static org.hamcrest.Matchers.containsString;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import io.github.samrjthompson.chmcp.common.exception.NotFoundException;
 import io.github.samrjthompson.chmcp.company.model.CompanySearchResponse;
 import io.github.samrjthompson.chmcp.company.service.CompaniesService;
 import java.util.List;
@@ -19,7 +21,7 @@ import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.MOCK)
 @AutoConfigureMockMvc
-class McpControllerIT {
+class McpServerIT {
 
     private static final String MCP_ENDPOINT = "/mcp";
     private static final String TOOLS_LIST_REQUEST = "{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"tools/list\"}";
@@ -42,13 +44,14 @@ class McpControllerIT {
         // given / when / then
         mockMvc.perform(MockMvcRequestBuilders.post(MCP_ENDPOINT)
                         .contentType(MediaType.APPLICATION_JSON)
+                        .accept(MediaType.APPLICATION_JSON, MediaType.TEXT_EVENT_STREAM)
                         .content(TOOLS_LIST_REQUEST))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.result.tools[0].name").value("search"));
     }
 
     @Test
-    void shouldExecuteSearchToolAndReturnStructuredContentWhenMethodIsToolsCall() throws Exception {
+    void shouldExecuteSearchToolAndReturnResultWhenMethodIsToolsCall() throws Exception {
         // given
         CompanySearchResponse companySearchResponse = new CompanySearchResponse("etag", "search#companies", 1, 0, 20,
                 List.of());
@@ -57,20 +60,38 @@ class McpControllerIT {
         // when / then
         mockMvc.perform(MockMvcRequestBuilders.post(MCP_ENDPOINT)
                         .contentType(MediaType.APPLICATION_JSON)
+                        .accept(MediaType.APPLICATION_JSON, MediaType.TEXT_EVENT_STREAM)
                         .content(TOOLS_CALL_REQUEST))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.result.isError").value(false))
-                .andExpect(jsonPath("$.result.structuredContent.kind").value("search#companies"));
+                .andExpect(jsonPath("$.result.content[0].text").value(containsString("search#companies")));
     }
 
     @Test
-    void shouldReturnParseErrorWhenRequestBodyIsMalformed() throws Exception {
+    void shouldReturnErrorResultWhenToolExecutionFails() throws Exception {
+        // given
+        when(companiesService.searchCompanies(any())).thenThrow(new NotFoundException("not found"));
+
+        // when / then
+        mockMvc.perform(MockMvcRequestBuilders.post(MCP_ENDPOINT)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .accept(MediaType.APPLICATION_JSON, MediaType.TEXT_EVENT_STREAM)
+                        .content(TOOLS_CALL_REQUEST))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.result.isError").value(true))
+                .andExpect(jsonPath("$.result.content[0].text")
+                        .value("The requested company could not be found"));
+    }
+
+    @Test
+    void shouldReturnBadRequestWhenRequestBodyIsMalformed() throws Exception {
         // given / when / then
         mockMvc.perform(MockMvcRequestBuilders.post(MCP_ENDPOINT)
                         .contentType(MediaType.APPLICATION_JSON)
+                        .accept(MediaType.APPLICATION_JSON, MediaType.TEXT_EVENT_STREAM)
                         .content(MALFORMED_REQUEST))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.error.code").value(-32700));
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.jsonRpcError.code").value(-32600));
     }
 
     @Test
@@ -78,6 +99,7 @@ class McpControllerIT {
         // given / when / then
         mockMvc.perform(MockMvcRequestBuilders.post(MCP_ENDPOINT)
                         .contentType(MediaType.APPLICATION_JSON)
+                        .accept(MediaType.APPLICATION_JSON, MediaType.TEXT_EVENT_STREAM)
                         .content(UNKNOWN_TOOL_REQUEST))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.error.code").value(-32602));

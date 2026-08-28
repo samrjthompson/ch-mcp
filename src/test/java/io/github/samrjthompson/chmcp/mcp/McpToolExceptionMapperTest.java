@@ -11,7 +11,6 @@ import io.github.samrjthompson.chmcp.common.exception.InternalServerErrorExcepti
 import io.github.samrjthompson.chmcp.common.exception.NotFoundException;
 import io.github.samrjthompson.chmcp.common.exception.TooManyRequestsException;
 import io.github.samrjthompson.chmcp.common.exception.UnauthorizedException;
-import io.github.samrjthompson.chmcp.mcp.model.McpToolCallResult;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.ConstraintViolationException;
 import java.util.Set;
@@ -40,12 +39,12 @@ class McpToolExceptionMapperTest {
 
     @ParameterizedTest
     @MethodSource("exceptionsAndExpectedMessages")
-    void shouldMapExceptionToFailureResultWithFixedMessage(RuntimeException exception, final String expectedMessage) {
+    void shouldMapExceptionToFixedMessage(RuntimeException exception, final String expectedMessage) {
         // given / when
-        final McpToolCallResult actual = mcpToolExceptionMapper.toErrorResult(exception);
+        final String actual = mcpToolExceptionMapper.toErrorMessage(exception);
 
         // then
-        assertEquals(McpToolCallResult.failure(expectedMessage), actual);
+        assertEquals(expectedMessage, actual);
     }
 
     static Stream<Arguments> exceptionsAndExpectedMessages() {
@@ -73,7 +72,7 @@ class McpToolExceptionMapperTest {
                 new ConstraintViolationException(Set.of(firstConstraintViolation, secondConstraintViolation));
 
         // when
-        final String actual = mcpToolExceptionMapper.toErrorResult(exception).content().get(0).text();
+        final String actual = mcpToolExceptionMapper.toErrorMessage(exception);
 
         // then
         assertTrue(actual.contains("query must not be blank"));

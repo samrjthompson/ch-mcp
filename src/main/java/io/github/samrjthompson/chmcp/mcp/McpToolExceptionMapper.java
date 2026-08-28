@@ -7,7 +7,6 @@ import io.github.samrjthompson.chmcp.common.exception.InternalServerErrorExcepti
 import io.github.samrjthompson.chmcp.common.exception.NotFoundException;
 import io.github.samrjthompson.chmcp.common.exception.TooManyRequestsException;
 import io.github.samrjthompson.chmcp.common.exception.UnauthorizedException;
-import io.github.samrjthompson.chmcp.mcp.model.McpToolCallResult;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.ConstraintViolationException;
 import java.util.stream.Collectors;
@@ -25,18 +24,17 @@ public class McpToolExceptionMapper {
     private static final String BAD_GATEWAY_MESSAGE = "Companies House could not be reached";
     private static final String DEFAULT_MESSAGE = "An unexpected error occurred while executing the tool";
 
-    public McpToolCallResult toErrorResult(RuntimeException exception) {
+    public String toErrorMessage(RuntimeException exception) {
         return switch (exception) {
-            case BadRequestException _ -> McpToolCallResult.failure(BAD_REQUEST_MESSAGE);
-            case UnauthorizedException _ -> McpToolCallResult.failure(UNAUTHORIZED_MESSAGE);
-            case ForbiddenException _ -> McpToolCallResult.failure(FORBIDDEN_MESSAGE);
-            case NotFoundException _ -> McpToolCallResult.failure(NOT_FOUND_MESSAGE);
-            case TooManyRequestsException _ -> McpToolCallResult.failure(TOO_MANY_REQUESTS_MESSAGE);
-            case InternalServerErrorException _ -> McpToolCallResult.failure(INTERNAL_SERVER_ERROR_MESSAGE);
-            case BadGatewayException _ -> McpToolCallResult.failure(BAD_GATEWAY_MESSAGE);
-            case ConstraintViolationException constraintViolationException ->
-                    McpToolCallResult.failure(toMessage(constraintViolationException));
-            default -> McpToolCallResult.failure(DEFAULT_MESSAGE);
+            case BadRequestException _ -> BAD_REQUEST_MESSAGE;
+            case UnauthorizedException _ -> UNAUTHORIZED_MESSAGE;
+            case ForbiddenException _ -> FORBIDDEN_MESSAGE;
+            case NotFoundException _ -> NOT_FOUND_MESSAGE;
+            case TooManyRequestsException _ -> TOO_MANY_REQUESTS_MESSAGE;
+            case InternalServerErrorException _ -> INTERNAL_SERVER_ERROR_MESSAGE;
+            case BadGatewayException _ -> BAD_GATEWAY_MESSAGE;
+            case ConstraintViolationException constraintViolationException -> toMessage(constraintViolationException);
+            default -> DEFAULT_MESSAGE;
         };
     }
 
