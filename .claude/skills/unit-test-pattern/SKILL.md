@@ -5,42 +5,51 @@ description: Sam's shape for JUnit Jupiter and Mockito unit tests — how many t
 
 # Unit test pattern
 
-Every unit test in this repo copies the shape of `ControllerTest.java`. JUnit Jupiter for assertions,
+Every unit test in this repo copies the shape of `SearchToolTest.java`. JUnit Jupiter for assertions,
 Mockito for collaborators, three named phases, one mock field block in a fixed order.
 
-This skill governs `*Test.java` only. `*IT.java` runs under failsafe against Testcontainers and is a
-different animal — nothing here applies to it.
+This skill governs `*Test.java` only. `*IT.java` is a different animal — see the `running-tests` skill for
+what it covers instead.
 
 ## The reference test
 
-`../../../src/test/java/io/github/samrjthompson/chmcp/chmcp/company/api/ControllerTest.java`:
+`src/test/java/io/github/samrjthompson/chmcp/company/tool/SearchToolTest.java`:
 
 ```java
 @ExtendWith(MockitoExtension.class)
-public class ControllerTest {
+class SearchToolTest {
+
+    private static final String QUERY = "tesco";
+    private static final Integer ITEMS_PER_PAGE = 20;
+    private static final Integer START_INDEX = 0;
+    private static final String RESTRICTIONS = "active";
 
     @Mock
-    private Service service;
+    private CompaniesService companiesService;
 
     @InjectMocks
-    private Controller controller;
+    private SearchTool searchTool;
+
+    @Mock
+    private CompanySearchResponse companySearchResponse;
 
     @Test
-    void shouldRetrieveCompaniesWithinFiveMileRadiusOfPostcode() {
+    void shouldSearchCompaniesWhenArgumentsAreProvided() {
         // given
-        final String postcode = "G12 8AU";
-        final long radius = 5L;
-
-        when(service.getCompanies(anyString(), anyLong())).thenReturn(List.of());
+        CompanySearchRequest expectedRequest = CompanySearchRequest.builder()
+                .query(QUERY)
+                .itemsPerPage(ITEMS_PER_PAGE)
+                .startIndex(START_INDEX)
+                .restrictions(RESTRICTIONS)
+                .build();
+        when(companiesService.searchCompanies(any())).thenReturn(companySearchResponse);
 
         // when
-        final ResponseEntity<List<String>> actual = controller.getCompanies(postcode, radius);
+        final CompanySearchResponse actual = searchTool.search(QUERY, ITEMS_PER_PAGE, START_INDEX, RESTRICTIONS);
 
         // then
-        assertEquals(HttpStatusCode.valueOf(HttpStatus.OK.value()), actual.getStatusCode());
-        assertEquals(List.of(), actual.getBody());
-
-        verify(service).getCompanies(postcode, radius);
+        assertEquals(companySearchResponse, actual);
+        verify(companiesService).searchCompanies(expectedRequest);
     }
 }
 ```
@@ -153,7 +162,7 @@ public class ServiceTest {
 Every test body is `// given`, `// when`, `// then`, each marker preceded by a blank line. This is the
 normal case, and most tests look exactly like it.
 
-These markers are the sole exception to the `no-code-comments` skill. They mark structure rather than
+These markers are the sole exception to CLAUDE.md's no-comments rule. They mark structure rather than
 explain code, so they cannot rot. Nothing else in a test file may carry a comment — if a step needs
 explaining, rename the variable or the test method until it does not.
 
@@ -242,6 +251,6 @@ Static imports throughout: `assertEquals`, not `Assertions.assertEquals`; `when`
 - Test methods are package-private and `void`. No `public`.
 - Method names start `should` and carry both the behaviour and the condition:
   `shouldRetrieveCompaniesWithinFiveMileRadiusOfPostcode`, not `testGetCompanies`.
-- Locals follow the `final-only-for-values` skill: `final` on `String` and primitive locals, bare on
-  everything else — except `actual` and `expected`, which always take `final` whatever their type.
+- Locals follow CLAUDE.md's `final` rule: `final` on `String` and primitive locals, bare on everything
+  else — except `actual` and `expected`, which always take `final` whatever their type.
 - The result of the call under test is named `actual`.

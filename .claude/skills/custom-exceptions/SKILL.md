@@ -1,30 +1,39 @@
 ---
 name: custom-exceptions
-description: Sam's rule for exceptions — three custom types only (InternalServerErrorException 500, BadGatewayException 502, NotFoundException 404), each a bare RuntimeException with two constructors, every status code owned by ControllerExceptionHandler. Load before writing, throwing or catching an exception in this repo.
+description: Sam's rule for exceptions — eight types in common/exception/, each a bare RuntimeException with two constructors, thrown by CompaniesHouseResponseHandler and translated at the @Tool boundary by ToolExceptionAspect and ToolExceptionMapper. Load before writing, throwing or catching an exception in this repo.
 ---
 
 # Custom exceptions
 
-Three exception types, one handler, and nothing anywhere else that knows a status code.
+Eight exception types in `common/exception/`, one throw site, one translation boundary.
 
-## The three
+## The eight
 
-| Type | Status | Thrown when |
-|---|---|---|
-| `InternalServerErrorException` | 500 | Something inside the app broke |
-| `BadGatewayException` | 502 | Something outside the app broke |
-| `NotFoundException` | 404 | A resource the code had already established must exist is gone |
+| Type | Meaning |
+|---|---|
+| `BadRequestException` | Companies House rejected the request as malformed (400) |
+| `UnauthorizedException` | The Companies House API key was rejected (401) |
+| `ForbiddenException` | Access to the requested resource is forbidden (403) |
+| `NotFoundException` | Companies House has no record matching the request (404) |
+| `TooManyRequestsException` | The Companies House rate limit has been exceeded (429) |
+| `InternalServerErrorException` | Companies House reported its own internal error (500), or returned a status this app does not recognise |
+| `BadGatewayException` | Companies House was unreachable or unavailable (502 or 503) |
+| `ToolException` | The one type that actually leaves a `@Tool` method — everything above is translated into this before it reaches an MCP client |
 
-The list is closed. A new failure picks one of the three — it does not get a fourth type. If none of the
-three fits, the honest answer is almost always that the condition is not exceptional and should not be an
-exception at all.
+Seven of the eight — everything but `ToolException` — exist to classify a single thing: the HTTP status
+Companies House returned. That list isn't closed. Right now an unrecognised status falls back to
+`InternalServerErrorException`, which is correct for the statuses nothing distinguishes yet — but if
+Companies House starts returning one worth telling apart, add a ninth: a new class in `common/exception/`
+with the same two-constructor shape, a new arm in `CompaniesHouseResponseHandler`'s switch, and a new case
+in `ToolExceptionMapper`. The rule this skill actually enforces is the *shape* every type takes and the
+single throw site, not a ceiling on how many there can be.
 
 ## The shape
 
-All three are identical but for the name:
+All eight are identical but for the name:
 
 ```java
-package io.github.samrjthompson.chmcp.common.exceptions;
+package io.github.samrjthompson.chmcp.common.exception;
 
 public class BadGatewayException extends RuntimeException {
 
@@ -42,200 +51,159 @@ public class BadGatewayException extends RuntimeException {
   project base class.
 - Exactly two constructors, both delegating straight to `super`. No more, no fewer.
 - No fields. No status code, no error code, no context map, no builder. The type *is* the payload — the
-  handler reads the class and knows the status.
-- `final String message`, bare `Throwable cause`, per the `final-only-for-values` skill.
+  mapper reads the class and knows what message to produce.
+- `final String message`, bare `Throwable cause`, per CLAUDE.md's `final` rule.
 
-No shared base class, even though the three are identical. A `BaseException` invites
-`catch (BaseException exception)`, which collapses the three back into one and forces the handler to
-reopen the type to find the status. The duplication is three short files and it never changes.
+No shared base class, even though all eight are identical. A `BaseException` invites
+`catch (BaseException exception)`, which collapses them back into one and forces anything downstream to
+reopen the type to find out what happened. The duplication is eight short files and it never changes.
 
-## Inside or outside
+## Where they're thrown
 
-The 500/502 split is about *where* the failure happened, not how bad it was.
-
-**Inside → `InternalServerErrorException`.** Our own code broke: a mapping produced something impossible,
-an invariant we maintain does not hold, a value we constructed was rejected by our own rules.
-
-**Outside → `BadGatewayException`.** The failure crossed a process boundary: the Companies House API,
-Mongo, Postgres, the filesystem, any other HTTP service. In practice this is anything you learn about by
-catching a library's exception — `IOException`, a driver exception, a Jackson failure parsing somebody
-else's payload.
-
-The test: if the cause came back from something reached over a socket or a disk, it is 502.
-
-### An upstream 404 is not a 502
-
-A `404` from Companies House is not a gateway failure. The upstream worked perfectly and gave a correct
-answer — the company does not exist. Only 5xx, timeouts, connection failures and unparseable bodies are
-`BadGatewayException`. An upstream `404` becomes an empty `Optional`, per the next section.
-
-## Exceptions are exceptional
-
-Never throw for a condition the caller expects. This is the rule that decides most cases, and it is the
-one most often got wrong.
-
-If absence is a possible correct answer for the input, the method returns `Optional<T>` or an empty
-collection, and the caller decides what to say about it:
+There is exactly one throw site: `CompaniesHouseResponseHandler.checkStatus()`, in `client/`. It inspects
+the HTTP status on every non-2xx response from Companies House and throws the matching type, one status to
+one exception:
 
 ```java
-public Optional<CompanyProfile> getCompany(final String companyNumber) {
-```
-
-A search that matches nothing returns an empty list. A lookup on a number a user typed returns an empty
-`Optional`. Neither is a `NotFoundException` — the caller asked a reasonable question and got a truthful
-answer.
-
-Turning that into a 404 response is one call, with no branching in the controller:
-
-```java
-@GetMapping("/companies/{companyNumber}")
-public ResponseEntity<CompanyProfile> getCompany(@PathVariable("companyNumber") final String companyNumber) {
-    LOGGER.info("Getting company [{}]", companyNumber);
-
-    return ResponseEntity.of(service.getCompany(companyNumber));
+switch (status) {
+    case BAD_REQUEST -> throw new BadRequestException(msg);
+    case UNAUTHORIZED -> throw new UnauthorizedException(msg);
+    case FORBIDDEN -> throw new ForbiddenException(msg);
+    case NOT_FOUND -> throw new NotFoundException(msg);
+    case TOO_MANY_REQUESTS -> throw new TooManyRequestsException(msg);
+    case INTERNAL_SERVER_ERROR -> throw new InternalServerErrorException(msg);
+    case BAD_GATEWAY, SERVICE_UNAVAILABLE -> throw new BadGatewayException(msg);
+    default -> throw new InternalServerErrorException(unexpectedStatusMessage);
 }
 ```
 
-`ResponseEntity.of` gives 200 with the body when the `Optional` is present and an empty 404 when it is
-not.
+502 and 503 both become `BadGatewayException` — both mean Companies House itself is unreachable or
+unavailable, which is the distinction that matters here, not the exact code. Any status this switch
+doesn't recognise also becomes `InternalServerErrorException`, on the basis that an unclassifiable upstream
+response is closer to "something broke that we didn't plan for" than any of the named cases.
 
-`NotFoundException` is for the other case: a resource the code has already established must exist. An id
-read out of a parent record, a document written moments ago, a foreign key we own. Its absence means
-something upstream of here is broken, which is why it is worth a stack trace and an ERROR log.
+This is a single-upstream client: everything these seven types classify is Companies House's response.
+There is no repository layer and no second backend, so there is no "our code broke" case among them —
+that distinction doesn't arise in this codebase.
 
-Two more consequences:
+A `NotFoundException` here is not swallowed into an empty result. It propagates like any other
+`RuntimeException`, reaches the `@Tool` boundary, and becomes an MCP tool error via the aspect below — an
+MCP client asking for a specific company that doesn't exist gets told so, not handed a silent `null`.
 
-- **Never catch one of the three to steer logic.** They exist to reach the handler. Catching one to
-  decide what to do next means the condition was expected, so it should have been a return value.
-- **Never use them for validation.** Rejecting bad input is Jakarta's job — `@NotBlank` and friends on the
-  request record. The handler maps the resulting `ConstraintViolationException` to 400.
+Never catch one of the seven to steer logic elsewhere in the app. They exist to reach
+`ToolExceptionAspect`; catching one to decide what to do next means the condition was expected, so it
+should have been a return value instead.
 
 ## Throwing
 
 Wrap the cause whenever you are inside a `catch`. The two-argument constructor exists for exactly this,
-and dropping the cause throws away the only part of the stack trace that says what actually went wrong:
+and dropping the cause throws away the only part of the stack trace that says what actually went wrong.
+Messages name the operation and bracket the identifiers, built with `formatted` — the same style the rest
+of the codebase logs in. Never put an API key, a credential or personal data in a message.
+
+## `ToolExceptionMapper`
+
+`@Component`, one method, `toErrorMessage(RuntimeException exception)`. A type-switch over the exception's
+runtime type produces a fixed, safe message per type:
+
+- Each of the seven domain exceptions above maps to its own constant message (e.g.
+  `BadGatewayException` → `"Companies House could not be reached"`).
+- `ConstraintViolationException` (Jakarta validation) maps to a dynamic message built by joining each
+  violation's own message.
+- Anything else falls back to a generic `"An unexpected error occurred while executing the tool"`.
+
+It never throws. It only translates an exception to the `String` an MCP client will see.
+
+## `ToolExceptionAspect`
+
+`@Aspect @Component`, constructor-injected with `ToolExceptionMapper`. One piece of advice:
 
 ```java
-} catch (MongoException ex) {
-    final String msg = "Failed to read company [%s] from Mongo".formatted(companyNumber);
-    LOGGER.error(msg);
-    throw new BadGatewayException(msg, ex);
-}
-```
-
-Not this:
-
-```java
-} catch (MongoException ex) {
-    throw new BadGatewayException("Mongo read failed");
-}
-```
-
-Messages name the operation and bracket the identifiers, built with `formatted` — the same style the
-rest of the codebase logs in. Never put an API key, a credential or personal data in a message: the
-handler logs it.
-
-## `ControllerExceptionHandler`
-
-Lives in `common/exceptions/` beside the three types, so a throw and the status it produces are read side
-by side. It owns every status code in the application.
-
-```java
-package io.github.samrjthompson.chmcp.common.exceptions;
-
-import io.github.samrjthompson.chmcp.common.exception.BadGatewayException;
-import io.github.samrjthompson.chmcp.common.exception.InternalServerErrorException;
-
-@RestControllerAdvice
-public class ControllerExceptionHandler {
-
-  @ExceptionHandler(NotFoundException.class)
-  public ResponseEntity<Void> handleNotFoundException() {
-    return ResponseEntity.notFound().build();
-  }
-
-  @ExceptionHandler(BadGatewayException.class)
-  public ResponseEntity<Void> handleBadGatewayException() {
-    return ResponseEntity.status(HttpStatus.BAD_GATEWAY).build();
-  }
-
-  @ExceptionHandler(ConstraintViolationException.class)
-  public ResponseEntity<Void> handleConstraintViolationException() {
-    return ResponseEntity.badRequest().build();
-  }
-
-  @ExceptionHandler({InternalServerErrorException.class, Exception.class})
-  public ResponseEntity<Void> handleInternalServerErrorException() {
-    return ResponseEntity.internalServerError().build();
-  }
-}
-```
-
-**`ResponseEntity<Void>` everywhere.** Status only, no body. Nothing an attacker can read, nothing about
-our internals on the wire. The detail lives in the log, where it belongs.
-
-**Anything unhandled is a 500.** `Exception.class` shares a method with
-`InternalServerErrorException` because they mean the same thing: the app broke and we did not see it
-coming. Spring resolves to the closest matching handler, so the fallback only fires when nothing more
-specific matches. Method order in the file does not affect resolution.
-
-## Catching broadly, throwing narrowly
-
-"Never use generic error types" governs what you *throw*, not what you *catch* — it's about the type you
-construct, not the type in a catch clause. `ControllerExceptionHandler` above already relies on this:
-`@ExceptionHandler({InternalServerErrorException.class, Exception.class})` catches `Exception.class`
-directly, on purpose, as the deliberate fallback.
-
-`ToolExceptionAspect` (`common/exception/`, the MCP/Spring-AI-tool equivalent of
-`ControllerExceptionHandler` — one `@Around` advice wrapping every `@Tool` method) does the same thing:
-`catch (RuntimeException exception)`, then translates whatever came out into a safe message via
-`ToolExceptionMapper` before rethrowing `ToolException`. An earlier version of this aspect named all
-seven custom types plus `ConstraintViolationException` in a multi-catch instead — that added nothing,
-since the aspect never branches on the caught type itself (only `ToolExceptionMapper`'s `switch` does),
-and it meant any *other* `RuntimeException` — a real bug, not a classified failure — skipped translation
-entirely and leaked its raw message instead of the mapper's safe fallback.
-
-Catch broadly only at a genuine boundary that funnels many possible causes into one safe outward
-signal — a `@RestControllerAdvice`, an aspect wrapping every invocation of some kind, anything playing
-that same role. Not mid-flow, and never as a way to skip deciding what a failure actually is before it
-reaches that boundary. The exception types themselves stay specific either way — this only changes what
-a *handler* is allowed to catch, never what anything is allowed to throw.
-
-## Tests
-
-**The three exception classes get no test.** Two constructors delegating to `super` is exactly the
-trivial code the `unit-test-pattern` skill rules out.
-
-**`ControllerExceptionHandlerTest`** gets one test per handler method — each is its own branch:
-
-```java
-@ExtendWith(MockitoExtension.class)
-public class ControllerExceptionHandlerTest {
-
-    private static final String MESSAGE = "Failed to read company [00445790] from Mongo";
-
-    @InjectMocks
-    private ControllerExceptionHandler controllerExceptionHandler;
-
-    @Test
-    void shouldReturnBadGatewayWhenBadGatewayExceptionIsHandled() {
-        // given / when
-        final ResponseEntity<Void> actual =
-                controllerExceptionHandler.handleBadGatewayException(new BadGatewayException(MESSAGE));
-
-        // then
-        assertEquals(HttpStatusCode.valueOf(HttpStatus.BAD_GATEWAY.value()), actual.getStatusCode());
+@Around("@annotation(org.springframework.ai.tool.annotation.Tool)")
+public Object translateToolExceptions(ProceedingJoinPoint joinPoint) throws Throwable {
+    try {
+        return joinPoint.proceed();
+    } catch (RuntimeException exception) {
+        throw new ToolException(toolExceptionMapper.toErrorMessage(exception), exception);
     }
 }
 ```
 
-**At least one path through a `ControllerIT`.** The unit test proves the method returns the right status;
-only `MockMvc` against the real context proves the advice is registered and actually intercepts.
+The pointcut is annotation-based — it wraps every `@Tool`-annotated method in the app, in whichever class
+declares it, not a package or naming convention. This is the sole exception-translation boundary in the
+codebase; no `@Tool` method does its own try/catch (see the `tool-pattern` skill).
 
-## Today's codebase
+## Catching broadly, throwing narrowly
 
-`CompaniesHouseApiException` predates this rule. It carries a `statusCode` field and takes the status as
-its first constructor argument, which is the shape this skill exists to replace — it is a
-`BadGatewayException`, with the upstream `404` becoming an empty `Optional` rather than an exception. Do
-not copy it, and do not add a second exception in its style. `ControllerExceptionHandler` is not written
-yet either.
+"Never use generic error types" governs what you *throw*, not what you *catch* — it's about the type you
+construct, not the type in a catch clause.
+
+`ToolExceptionAspect` above relies on this deliberately: `catch (RuntimeException exception)` is a broad
+catch, on purpose, at a genuine boundary that funnels every possible failure into one safe outward signal.
+An earlier version of this aspect named all seven domain types plus `ConstraintViolationException` in a
+multi-catch instead — that added nothing, since the aspect never branches on the caught type itself (only
+`ToolExceptionMapper`'s switch does), and it meant any *other* `RuntimeException` — a real bug, not a
+classified failure — skipped translation entirely and leaked its raw message instead of the mapper's safe
+fallback.
+
+Catch broadly only at a boundary like this one — something wrapping every invocation of a given kind. Not
+mid-flow, and never as a way to skip deciding what a failure actually is before it reaches that boundary.
+The exception types themselves stay specific either way — this only changes what a *handler* is allowed to
+catch, never what anything is allowed to throw.
+
+## Tests
+
+**The seven domain exception classes get no test.** Two constructors delegating to `super` is exactly the
+trivial code the `unit-test-pattern` skill rules out.
+
+**`ToolExceptionAspectTest`** covers both branches of the advice:
+
+```java
+@ExtendWith(MockitoExtension.class)
+class ToolExceptionAspectTest {
+
+    @Mock
+    private ToolExceptionMapper toolExceptionMapper;
+
+    @InjectMocks
+    private ToolExceptionAspect toolExceptionAspect;
+
+    @Mock
+    private ProceedingJoinPoint proceedingJoinPoint;
+
+    @Test
+    void shouldReturnJoinPointResultWhenNoExceptionIsThrown() throws Throwable {
+        // given
+        when(proceedingJoinPoint.proceed()).thenReturn(RESULT);
+
+        // when
+        final Object actual = toolExceptionAspect.translateToolExceptions(proceedingJoinPoint);
+
+        // then
+        assertEquals(RESULT, actual);
+    }
+
+    @Test
+    void shouldRethrowToolExceptionWithMappedMessageWhenJoinPointThrowsRuntimeException() throws Throwable {
+        // given
+        RuntimeException thrownException = new RuntimeException(MESSAGE);
+        when(proceedingJoinPoint.proceed()).thenThrow(thrownException);
+        when(toolExceptionMapper.toErrorMessage(any())).thenReturn(MAPPED_MESSAGE);
+
+        // when
+        final ToolException actual = assertThrows(ToolException.class,
+                () -> toolExceptionAspect.translateToolExceptions(proceedingJoinPoint));
+
+        // then
+        assertEquals(MAPPED_MESSAGE, actual.getMessage());
+        assertEquals(thrownException, actual.getCause());
+        verify(toolExceptionMapper).toErrorMessage(thrownException);
+    }
+}
+```
+
+**`ToolExceptionMapperTest`** gets one test per switch arm — each mapped exception type is its own branch,
+per `unit-test-pattern`'s branch-coverage rule.
+
+**`CompaniesHouseResponseHandlerTest`** gets one test per status code it classifies, asserting the right
+exception type is thrown with the expected message.

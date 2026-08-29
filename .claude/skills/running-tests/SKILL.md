@@ -5,8 +5,9 @@ description: Which test command to run here and when — `make test` is the defa
 
 # Running tests
 
-`make test` is the command. It is `mvn clean verify` — surefire runs the unit tests, failsafe runs the
-integration tests. Run it once, at the end, and report what it says.
+`make test` is the command. It runs `mvn clean`, then `mvn spotless:check` (the `format-check`
+prerequisite), then `mvn verify` — surefire runs the unit tests, failsafe runs the integration tests. Run
+it once, at the end, and report what it says.
 
 ## A green `make test` is the whole verification
 
@@ -27,18 +28,18 @@ One test command per change.
 
 ## `make unit-test` is for the inner loop only
 
-`make unit-test` is `mvn clean test`. Reach for it while iterating on a unit test in progress, when the
-feedback speed matters and the integration tests cannot tell you anything. It is never the final proof that a
-change works, and never a step on the way to `make test`.
+`make unit-test` runs `mvn clean`, then `mvn spotless:check`, then `mvn test` — the same `format-check`
+prerequisite as `make test`, but surefire only, no failsafe. Reach for it while iterating on a unit test in
+progress, when the feedback speed matters and the integration tests cannot tell you anything. It is never
+the final proof that a change works, and never a step on the way to `make test`.
 
-## Testcontainers needs no permission
+## How the integration tests get their isolation
 
-The integration tests start containers through Testcontainers. That is expected and requires no confirmation —
-just run `make test`. This is separate from the compose stack, which is Sam's to start and never something to
-initiate. See the `ask-before-starting-containers` skill.
-
-Testcontainers does need the Docker daemon running. If it is not, say so and stop. Do not quietly fall back to
-`make unit-test` and report the change verified — that hides untested integration code behind a green tick.
+`MainIT` and `McpServerIT` — the only two `*IT` classes in the repo — run entirely in-process. Both are
+`@SpringBootTest` with `@AutoConfigureMockMvc`, driving requests through `MockMvc`; `McpServerIT` also uses
+`@MockitoBean` to stub `CompaniesService`, so no real network call reaches Companies House. Nothing here
+starts a container or needs the Docker daemon — `make test` needs no permission for that reason among
+others; see the `ask-before-starting-containers` skill for the docker-command rule itself.
 
 ## When not to run tests at all
 
